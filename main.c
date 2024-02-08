@@ -3,34 +3,13 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <stdbool.h>
 #define	CHECK_ALLOC(p) if(p == NULL) {perror(__func__); exit(EXIT_FAILURE);}
-
-// Token types
-typedef enum {
-    TOKEN_INT,
-    TOKEN_PLUS,
-    TOKEN_MINUS,
-    TOKEN_MULTIPLY,
-    TOKEN_DIVIDE,
-    TOKEN_IDENTIFIER,
-    TOKEN_ASSIGN,
-    TOKEN_EQUAL,
-    TOKEN_NOT_EQUAL,
-    TOKEN_IF,
-    TOKEN_ELSE,
-    TOKEN_WHILE,
-    TOKEN_LPAREN,
-    TOKEN_RPAREN,
-    TOKEN_LBRACE,
-    TOKEN_RBRACE,
-    TOKEN_EOL,
-} TokenType;
+#include "tokens.h"
 
 
-typedef struct {
-    TokenType type;
-    char* value;
-} Token;
+char* keywords[2] = {"int", "double"};
+
 
 char* token_type_to_string(TokenType type) {
     switch (type) {
@@ -50,8 +29,8 @@ char* token_type_to_string(TokenType type) {
             return "TOKEN_ASSIGN";
         case TOKEN_EQUAL:
             return "TOKEN_EQUAL";
-        case TOKEN_NOT_EQUAL:
-            return "TOKEN_NOT_EQUAL";
+        case TOKEN_KEYWORD:
+            return "TOKEN_KEYWORD";
         case TOKEN_IF:
             return "TOKEN_IF";
         case TOKEN_ELSE:
@@ -90,6 +69,14 @@ void free_token(Token* token) {
     free(token);
 }
 
+
+// use Regex to check if the identifier is valid (ie contains only letters, numbers and underscores)
+void is_valid_identifier(char* value) {
+    
+}
+
+
+
 void print_token(Token* token) {
     char* type_str = token_type_to_string(token->type);
     
@@ -98,6 +85,26 @@ void print_token(Token* token) {
     } else {
         printf("Token(type: %s)\n", type_str);
     }
+}
+
+char* extract_number(char* input, int* i) {
+    int start = *i;
+    while (isdigit(input[*i])) {
+        (*i)++;
+    }
+    int length = *i - start;
+    char* value = (char*)malloc((length + 1) * sizeof(char));
+    strncpy(value, input + start, length); value[length] = '\0';
+    return value;
+}
+
+bool check_if_keyword(char* value) {
+    for (int i = 0; i < 2; i++) {
+        if (strcmp(value, keywords[i]) == 0) {
+            return true;
+        }
+    }
+    return false;
 }
 
 
@@ -114,13 +121,7 @@ Token** tokenize(char* input) {
             i++;
         } 
         else if (isdigit(input[i])) { // if its a number
-            int start = i;
-            while (isdigit(input[i])) {
-                i++;
-            }
-            int length = i - start;
-            char* value = (char*)malloc((length + 1) * sizeof(char));
-            strncpy(value, input + start, length); value[length] = '\0';
+            char* value = extract_number(input, &i);
             tokens[token_count++] = create_token(TOKEN_INT, value);
         } else {
             switch (input[i]) {
@@ -139,10 +140,10 @@ Token** tokenize(char* input) {
                 case '=':
                     if (input[i + 1] == '=') {
                         tokens[token_count++] = create_token(TOKEN_EQUAL, NULL);
+                        i += 2;
                     } else {
-                        tokens[token_count++] = create_token(TOKEN_ASSIGN, NULL);
+                        tokens[token_count++] = create_token(TOKEN_ASSIGN, NULL); i++;
                     }
-                    i++;
                     break;
                 break;
                 case '(':
@@ -171,11 +172,17 @@ Token** tokenize(char* input) {
 
                     if (strcmp(value, "if") == 0) {
                         tokens[token_count++] = create_token(TOKEN_IF, NULL);
-                    } else if (strcmp(value, "else") == 0) {
+                    } 
+                    else if (strcmp(value, "else") == 0) {
                         tokens[token_count++] = create_token(TOKEN_ELSE, NULL);
-                    } else if (strcmp(value, "while") == 0) {
+                    } 
+                    else if (strcmp(value, "while") == 0) {
                         tokens[token_count++] = create_token(TOKEN_WHILE, NULL);
-                    } else {
+                    }
+                    else if (check_if_keyword(value)) {
+                        tokens[token_count++] = create_token(TOKEN_KEYWORD, NULL);
+                    }
+                    else {
                         tokens[token_count++] = create_token(TOKEN_IDENTIFIER, value); // this is a variable
                     }
 
@@ -217,6 +224,5 @@ int main() {
     // Free the memory occupied by the tokens
     free_tokens(tokens);
 
-    return 0;
     return 0;
 }
