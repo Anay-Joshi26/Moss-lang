@@ -1,6 +1,6 @@
 PROJECT = moss
-HEADERS = tokens.h
-OBJ = main.o
+HEADERS = tokens.h main.h
+OBJ = main.o lexer.o
 
 C11 = cc
 CFLAGS = -Wall -Werror -std=c11

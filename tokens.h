@@ -18,6 +18,7 @@ typedef enum {
     TOKEN_LBRACE,
     TOKEN_RBRACE,
     TOKEN_EOL,
+    TOKEN_EOF
 } TokenType;
 
 
